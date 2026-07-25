@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% block title %}Gaon Ghar Delivery{% endblock %}
+{% block content %}
+<div id="splash"><div class="splash-logo">🏡</div><h1>Gaon Ghar Delivery</h1><p>Developed by <b>Himanshu</b></p></div>
+<header class="hero"><div><span class="eyebrow">APNE GAON KA DELIVERY APP</span><h1>Ghar baithe samaan,<br><span>jaldi aur aasani se.</span></h1><p>Local shops se order karein aur ghar par delivery paayein.</p><a class="button" href="#shop">Shop Now</a></div><div class="hero-card"><span>⚡</span><b>Fast local delivery</b><small>Simple ordering • Trusted shops</small></div></header>
+<main class="container" id="shop">
+<form method="POST" action="{{ url_for('place_order') }}" id="order-form">
+<section class="shop-toolbar">
+  <input class="search" id="search" type="search" placeholder="🔎 Product ya shop search karein">
+  <div class="chips"><button type="button" class="chip active" data-category="all">Sab</button>{% for category in categories %}<button type="button" class="chip" data-category="{{ category|lower }}">{{ category }}</button>{% endfor %}</div>
+</section>
+<section class="section-head"><div><small>POPULAR ITEMS</small><h2>Aaj kya mangwana hai?</h2></div><span>{{ products|length }} products</span></section>
+<section class="products" id="products">
+{% for product in products %}
+<article class="product-card" data-search="{{ product.name|lower }} {{ product.shop_name|lower }}" data-category="{{ product.category|lower }}">
+  <div class="image-wrap">{% if product.image_url %}<img class="product-image" src="{{ url_for('static', filename='uploads/' + product.image_url) }}" alt="{{ product.name }}" loading="lazy">{% else %}<div class="placeholder">🛍️</div>{% endif %}<span class="category-tag">{{ product.category }}</span></div>
+  <div class="product-info"><p class="shop">🏪 {{ product.shop_name }}</p><h3>{{ product.name }}</h3><div class="product-bottom"><span class="price">₹{{ product.price }}</span><div class="stepper"><button type="button" class="minus" aria-label="Ghatao">−</button><input class="quantity" type="number" name="quantity_{{ product.id }}" value="0" min="0" max="20" data-price="{{ product.price }}" readonly><button type="button" class="plus" aria-label="Badhao">+</button></div></div></div>
+</article>{% endfor %}
+</section>
+<section class="checkout-grid">
+  <div class="card"><span class="eyebrow">DELIVERY DETAILS</span><h2>Order kahan bhejna hai?</h2><div class="form-grid"><label>Naam<input type="text" name="customer_name" maxlength="80" autocomplete="name" required></label><label>Mobile<input type="tel" name="phone" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" autocomplete="tel" required></label></div><label>Poora address<textarea name="address" rows="4" maxlength="500" autocomplete="street-address" required></textarea></label></div>
+  <aside class="card bill"><h2>Bill Details</h2><div><span>Item total</span><b>₹<span id="subtotal">0</span></b></div><div><span>Delivery fee ({{ delivery_rate }}%)</span><b>₹<span id="delivery-fee">0</span></b></div><hr><div class="grand"><span>To Pay</span><b>₹<span id="grand-total">0</span></b></div><button class="full order-btn" type="submit">Place Order →</button><small>Order place karke payment delivery par kar sakte hain.</small></aside>
+</section>
+<div class="cart-bar" id="cart-bar"><div><b><span id="cart-count">0</span> items</b><small>₹<span id="mobile-total">0</span> total</small></div><button type="button" onclick="document.querySelector('.checkout-grid').scrollIntoView({behavior:'smooth'})">View Cart →</button></div>
+</form></main>
+{% endblock %}
+{% block scripts %}<script>
+const splash=document.getElementById('splash'); setTimeout(()=>splash.classList.add('hide'),1200);
+const inputs=[...document.querySelectorAll('.quantity')];
+function update(){let sub=0,count=0;inputs.forEach(i=>{const q=Number(i.value)||0;sub+=q*Number(i.dataset.price);count+=q});const fee=sub?Math.max(1,Math.round(sub*{{ delivery_rate }}/100)):0,total=sub+fee;document.getElementById('subtotal').textContent=sub;document.getElementById('delivery-fee').textContent=fee;document.getElementById('grand-total').textContent=total;document.getElementById('mobile-total').textContent=total;document.getElementById('cart-count').textContent=count;document.getElementById('cart-bar').classList.toggle('show',count>0)}
+document.querySelectorAll('.stepper').forEach(s=>{const i=s.querySelector('input');s.querySelector('.plus').onclick=()=>{i.value=Math.min(20,Number(i.value)+1);update()};s.querySelector('.minus').onclick=()=>{i.value=Math.max(0,Number(i.value)-1);update()}});
+function filter(){const text=document.getElementById('search').value.toLowerCase().trim(),cat=document.querySelector('.chip.active').dataset.category;document.querySelectorAll('.product-card').forEach(c=>c.hidden=!(c.dataset.search.includes(text)&&(cat==='all'||c.dataset.category===cat)))}
+document.getElementById('search').addEventListener('input',filter);document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelector('.chip.active').classList.remove('active');c.classList.add('active');filter()});
+document.getElementById('order-form').addEventListener('submit',e=>{if(Number(document.getElementById('cart-count').textContent)===0){e.preventDefault();alert('Pehle koi product cart me add karo.')}});
+</script>{% endblock %}
